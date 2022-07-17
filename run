@@ -1,5 +1,8 @@
 [default]
-cargo run test/test.rac
+cargo run -- -ti test/test.rac
+
+[h]
+cargo run -- --help
 
 [check]
 cargo fmt
