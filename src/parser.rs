@@ -34,6 +34,7 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
     let mut errors = Vec::new();
 
     while collection.iter().any(Either::is_left) {
+        let mut changed = false;
         for (index, item) in collection.iter().enumerate() {
             if let Either::Left(Token {
                 ty: TokenType::BraceClose,
@@ -65,6 +66,7 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
                             brace_open,
                             Either::Right(Instruction::Block { instructions }),
                         );
+                        changed = true;
                         break;
                     }
                     None => {
@@ -91,9 +93,13 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
                             instructions,
                         }),
                     );
+                    changed = true;
                     break;
                 }
             }
+        }
+        if !changed {
+            return Err(errors);
         }
     }
 
