@@ -4,8 +4,8 @@ use crate::lexer::{Token, TokenType};
 
 #[derive(Debug)]
 pub struct ParseError {
-    ty: ParseErrorType,
-    line: usize,
+    pub ty: ParseErrorType,
+    pub line: usize,
 }
 
 #[derive(Debug)]
