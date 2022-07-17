@@ -31,24 +31,21 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, ParseError> {
 
     while collection.iter().any(Either::is_left) {
         for (index, item) in collection.iter().enumerate() {
-            if matches!(
-                item,
-                Either::Left(Token {
-                    ty: TokenType::BraceClose,
-                    ..
-                })
-            ) {
+            if let Either::Left(Token {
+                ty: TokenType::BraceClose,
+                line,
+            }) = item {
                 let brace_close = index;
                 match find_last_brace(&collection, index) {
-                    Ok(brace_open) => {
+                    Some(brace_open) => {
                         let mut instructions = Vec::new();
                         for index in brace_open + 1..brace_close {
                             if let Either::Right(item) = &collection[index] {
                                 instructions.push(item.clone());
                             } else {
                                 return Err(ParseError {
-                                    ty: ParseErrorType::UnmatchedBrace,
-                                    line: brace_close,
+                                    ty: ParseErrorType::UnexpectedToken,
+                                    line: *line,
                                 });
                             }
                         }
@@ -60,16 +57,10 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, ParseError> {
                         );
                         break;
                     }
-                    Err(Some(line)) => {
-                        return Err(ParseError {
-                            ty: ParseErrorType::UnexpectedToken,
-                            line,
-                        });
-                    }
-                    Err(None) => {
+                    None => {
                         return Err(ParseError {
                             ty: ParseErrorType::UnmatchedBrace,
-                            line: brace_close,
+                            line: *line,
                         });
                     }
                 }
@@ -98,23 +89,17 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, ParseError> {
     Ok(collection.into_iter().map(Either::unwrap_right).collect())
 }
 
-fn find_last_brace(
-    collection: &[Either<Token, Instruction>],
-    from: usize,
-) -> Result<usize, Option<usize>> {
+fn find_last_brace(collection: &[Either<Token, Instruction>], from: usize) -> Option<usize> {
     for i in (0..from).rev() {
         match &collection[i] {
             Either::Left(Token {
                 ty: TokenType::BraceOpen,
                 ..
             }) => {
-                return Ok(i);
-            }
-            Either::Left(Token { line, .. }) => {
-                return Err(Some(*line));
+                return Some(i);
             }
             _ => {}
         }
     }
-    Err(None)
+    None
 }
