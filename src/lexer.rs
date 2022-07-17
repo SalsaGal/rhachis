@@ -36,7 +36,7 @@ pub fn lex(contents: String) -> Vec<Token> {
                     if !current_token.is_empty() {
                         to_ret.push(Token {
                             line,
-                            line_range: line_char - current_token.len()..line_char + 1,
+                            line_range: line_char - current_token.len()..line_char,
                             ty: TokenType::Identifier(current_token.clone()),
                         });
                         current_token.clear();

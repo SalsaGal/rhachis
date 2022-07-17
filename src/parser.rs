@@ -45,14 +45,17 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, ParseError> {
                     Some(brace_open) => {
                         let mut instructions = Vec::new();
                         for item in collection.iter().take(brace_close).skip(brace_open + 1) {
-                            if let Either::Right(item) = item {
-                                instructions.push(item.clone());
-                            } else {
-                                return Err(ParseError {
-                                    ty: ParseErrorType::UnexpectedToken,
-                                    line: *line,
-                                    line_range: line_range.clone(),
-                                });
+                            match item {
+                                Either::Right(item) => {
+                                    instructions.push(item.clone());
+                                },
+                                Either::Left(token) => {
+                                    return Err(ParseError {
+                                        ty: ParseErrorType::UnexpectedToken,
+                                        line: token.line,
+                                        line_range: token.line_range.clone(),
+                                    });
+                                },
                             }
                         }
 
