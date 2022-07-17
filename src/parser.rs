@@ -28,9 +28,10 @@ pub enum Instruction {
     },
 }
 
-pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, ParseError> {
+pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
     let mut collection: Vec<Either<Token, Instruction>> =
         token.into_iter().map(Either::Left).collect();
+    let mut errors = Vec::new();
 
     while collection.iter().any(Either::is_left) {
         for (index, item) in collection.iter().enumerate() {
@@ -50,7 +51,7 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, ParseError> {
                                     instructions.push(item.clone());
                                 },
                                 Either::Left(token) => {
-                                    return Err(ParseError {
+                                    errors.push(ParseError {
                                         ty: ParseErrorType::UnexpectedToken,
                                         line: token.line,
                                         line_range: token.line_range.clone(),
@@ -67,7 +68,7 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, ParseError> {
                         break;
                     }
                     None => {
-                        return Err(ParseError {
+                        errors.push(ParseError {
                             ty: ParseErrorType::UnmatchedBrace,
                             line: *line,
                             line_range: line_range.clone(),
@@ -96,7 +97,11 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, ParseError> {
         }
     }
 
-    Ok(collection.into_iter().map(Either::unwrap_right).collect())
+    if errors.is_empty() {
+        Ok(collection.into_iter().map(Either::unwrap_right).collect())
+    } else {
+        Err(errors)
+    }
 }
 
 fn find_last_brace(collection: &[Either<Token, Instruction>], from: usize) -> Option<usize> {

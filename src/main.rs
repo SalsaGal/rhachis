@@ -20,21 +20,23 @@ fn main() {
             Ok(instructions) => {
                 dbg!(instructions);
             }
-            Err(err) => {
-                let line_number = err.line.to_string();
+            Err(errs) => {
+                for err in errs {
+                    let line_number = err.line.to_string();
 
-                eprintln!("ERROR: {:?}", err.ty);
-                eprintln!(
-                    "{} |{}",
-                    line_number,
-                    contents.split('\n').nth(err.line - 1).unwrap()
-                );
-                eprintln!(
-                    "{} |{}{}",
-                    " ".repeat(line_number.len()),
-                    " ".repeat(err.line_range.start),
-                    "^".repeat(err.line_range.end - err.line_range.start)
-                );
+                    eprintln!("ERROR: {:?}", err.ty);
+                    eprintln!(
+                        "{} |{}",
+                        line_number,
+                        contents.split('\n').nth(err.line - 1).unwrap()
+                    );
+                    eprintln!(
+                        "{} |{}{}",
+                        " ".repeat(line_number.len()),
+                        " ".repeat(err.line_range.start),
+                        "^".repeat(err.line_range.end - err.line_range.start)
+                    );
+                }
             }
         }
     }
