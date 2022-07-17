@@ -4,6 +4,7 @@ use crate::lexer::Token;
 
 #[derive(Debug)]
 pub enum ParseError {
+    UnexpectedToken,
     UnmatchedBrace,
 }
 
@@ -27,11 +28,21 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, ParseError> {
             if matches!(item, Either::Left(Token::BraceClose)) {
                 if let Some(brace_open) = find_last_brace(&collection, index) {
                     let brace_close = index;
+
+                    let mut instructions = Vec::new();
+                    for index in brace_open + 1 .. brace_close {
+                        if let Either::Right(item) = &collection[index] {
+                            instructions.push(item.clone());
+                        } else {
+                            return Err(ParseError::UnexpectedToken);
+                        }
+                    }
+
                     collection.drain(brace_open..brace_close + 1);
                     collection.insert(
                         brace_open,
                         Either::Right(Instruction::Block {
-                            instructions: vec![],
+                            instructions,
                         }),
                     );
                     break;
