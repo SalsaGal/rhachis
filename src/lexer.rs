@@ -44,6 +44,7 @@ pub fn lex(contents: String) -> Vec<Token> {
                     if c == '\n' {
                         line += 1;
                         line_char = 0;
+                        continue;
                     }
                 } else {
                     current_token.push(c);

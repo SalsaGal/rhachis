@@ -21,14 +21,17 @@ fn main() {
                 dbg!(instructions);
             }
             Err(err) => {
+                let line_number = err.line.to_string();
+
                 eprintln!("ERROR: {:?}", err.ty);
                 eprintln!(
-                    "{}  |{}",
-                    err.line,
+                    "{} |{}",
+                    line_number,
                     contents.split('\n').nth(err.line - 1).unwrap()
                 );
                 eprintln!(
-                    "   |{}{}",
+                    "{} |{}{}",
+                    " ".repeat(line_number.len()),
                     " ".repeat(err.line_range.start),
                     "^".repeat(err.line_range.end - err.line_range.start)
                 );
