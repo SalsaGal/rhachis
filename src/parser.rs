@@ -3,7 +3,12 @@ use either::Either;
 use crate::lexer::{Token, TokenType};
 
 #[derive(Debug)]
-pub enum ParseError {
+pub struct ParseError {
+    ty: ParseErrorType,
+}
+
+#[derive(Debug)]
+pub enum ParseErrorType {
     UnexpectedToken,
     UnmatchedBrace,
 }
@@ -40,7 +45,9 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, ParseError> {
                         if let Either::Right(item) = &collection[index] {
                             instructions.push(item.clone());
                         } else {
-                            return Err(ParseError::UnexpectedToken);
+                            return Err(ParseError {
+                                ty: ParseErrorType::UnmatchedBrace,
+                            });
                         }
                     }
 
@@ -51,7 +58,9 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, ParseError> {
                     );
                     break;
                 } else {
-                    return Err(ParseError::UnmatchedBrace);
+                    return Err(ParseError {
+                        ty: ParseErrorType::UnexpectedToken,
+                    });
                 }
             } else if let Either::Right(Instruction::Block { instructions }) = item {
                 if let Some(Either::Left(Token {
