@@ -7,7 +7,7 @@ pub enum ParseError {
     UnmatchedBrace,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Instruction {
     Block {
         instructions: Vec<Instruction>,
@@ -34,10 +34,20 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, ParseError> {
                             instructions: vec![],
                         }),
                     );
-                    dbg!(&collection);
                     break;
                 } else {
                     return Err(ParseError::UnmatchedBrace);
+                }
+            } else if let Either::Right(Instruction::Block {instructions}) = item {
+                if let Some(Either::Left(Token::Identifier(ident))) = collection.get(index - 1) {
+                    let instructions = instructions.clone();
+                    let ident = ident.clone();
+                    collection.drain(index - 1 .. index + 1);
+                    collection.insert(index - 1, Either::Right(Instruction::Section {
+                        ident,
+                        instructions,
+                    }));
+                    break;
                 }
             }
         }
