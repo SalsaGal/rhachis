@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use either::Either;
 
 use crate::lexer::{Token, TokenType};
@@ -6,6 +8,7 @@ use crate::lexer::{Token, TokenType};
 pub struct ParseError {
     pub ty: ParseErrorType,
     pub line: usize,
+    pub line_range: Range<usize>,
 }
 
 #[derive(Debug)]
@@ -34,7 +37,9 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, ParseError> {
             if let Either::Left(Token {
                 ty: TokenType::BraceClose,
                 line,
-            }) = item {
+                line_range,
+            }) = item
+            {
                 let brace_close = index;
                 match find_last_brace(&collection, index) {
                     Some(brace_open) => {
@@ -46,6 +51,7 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, ParseError> {
                                 return Err(ParseError {
                                     ty: ParseErrorType::UnexpectedToken,
                                     line: *line,
+                                    line_range: line_range.clone(),
                                 });
                             }
                         }
@@ -61,6 +67,7 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, ParseError> {
                         return Err(ParseError {
                             ty: ParseErrorType::UnmatchedBrace,
                             line: *line,
+                            line_range: line_range.clone(),
                         });
                     }
                 }

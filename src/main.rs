@@ -22,7 +22,16 @@ fn main() {
             }
             Err(err) => {
                 eprintln!("ERROR: {:?}", err.ty);
-                eprintln!("{}  |{}", err.line, contents.split('\n').nth(err.line - 1).unwrap());
+                eprintln!(
+                    "{}  |{}",
+                    err.line,
+                    contents.split('\n').nth(err.line - 1).unwrap()
+                );
+                eprintln!(
+                    "   |{}{}",
+                    " ".repeat(err.line_range.start),
+                    "^".repeat(err.line_range.end - err.line_range.start)
+                );
             }
         }
     }
