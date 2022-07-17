@@ -44,8 +44,8 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, ParseError> {
                 match find_last_brace(&collection, index) {
                     Some(brace_open) => {
                         let mut instructions = Vec::new();
-                        for index in brace_open + 1..brace_close {
-                            if let Either::Right(item) = &collection[index] {
+                        for item in collection.iter().take(brace_close).skip(brace_open + 1) {
+                            if let Either::Right(item) = item {
                                 instructions.push(item.clone());
                             } else {
                                 return Err(ParseError {
@@ -98,14 +98,14 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, ParseError> {
 
 fn find_last_brace(collection: &[Either<Token, Instruction>], from: usize) -> Option<usize> {
     for i in (0..from).rev() {
-        match &collection[i] {
+        if matches!(
+            collection[i],
             Either::Left(Token {
                 ty: TokenType::BraceOpen,
                 ..
-            }) => {
-                return Some(i);
-            }
-            _ => {}
+            })
+        ) {
+            return Some(i);
         }
     }
     None
