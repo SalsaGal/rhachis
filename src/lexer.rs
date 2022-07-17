@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Token {
     BraceOpen,
     BraceClose,
@@ -21,7 +21,7 @@ pub fn lex(contents: String) -> Vec<Token> {
                 } else {
                     current_token.push(c);
                 }
-            },
+            }
         }
     }
     to_ret

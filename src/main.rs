@@ -1,4 +1,5 @@
 mod lexer;
+mod parser;
 
 use std::fs;
 
@@ -13,6 +14,8 @@ fn main() {
     let args = Args::parse();
     if let Ok(contents) = fs::read_to_string(args.source) {
         let tokens = lexer::lex(contents);
-        dbg!(tokens);
+        dbg!(&tokens);
+        let instructions = parser::parse(tokens);
+        dbg!(&instructions);
     }
 }
