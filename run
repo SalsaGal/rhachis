@@ -1,5 +1,5 @@
 [default]
-cargo run -- -ti test/test.rac
+cargo run -- -i test/test.rac
 
 [h]
 cargo run -- --help

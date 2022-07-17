@@ -5,6 +5,7 @@ use crate::lexer::{Token, TokenType};
 #[derive(Debug)]
 pub struct ParseError {
     ty: ParseErrorType,
+    line: usize,
 }
 
 #[derive(Debug)]
@@ -37,30 +38,40 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, ParseError> {
                     ..
                 })
             ) {
-                if let Some(brace_open) = find_last_brace(&collection, index) {
-                    let brace_close = index;
-
-                    let mut instructions = Vec::new();
-                    for index in brace_open + 1..brace_close {
-                        if let Either::Right(item) = &collection[index] {
-                            instructions.push(item.clone());
-                        } else {
-                            return Err(ParseError {
-                                ty: ParseErrorType::UnmatchedBrace,
-                            });
+                let brace_close = index;
+                match find_last_brace(&collection, index) {
+                    Ok(brace_open) => {
+                        let mut instructions = Vec::new();
+                        for index in brace_open + 1..brace_close {
+                            if let Either::Right(item) = &collection[index] {
+                                instructions.push(item.clone());
+                            } else {
+                                return Err(ParseError {
+                                    ty: ParseErrorType::UnmatchedBrace,
+                                    line: brace_close,
+                                });
+                            }
                         }
-                    }
 
-                    collection.drain(brace_open..brace_close + 1);
-                    collection.insert(
-                        brace_open,
-                        Either::Right(Instruction::Block { instructions }),
-                    );
-                    break;
-                } else {
-                    return Err(ParseError {
-                        ty: ParseErrorType::UnexpectedToken,
-                    });
+                        collection.drain(brace_open..brace_close + 1);
+                        collection.insert(
+                            brace_open,
+                            Either::Right(Instruction::Block { instructions }),
+                        );
+                        break;
+                    }
+                    Err(Some(line)) => {
+                        return Err(ParseError {
+                            ty: ParseErrorType::UnexpectedToken,
+                            line,
+                        });
+                    }
+                    Err(None) => {
+                        return Err(ParseError {
+                            ty: ParseErrorType::UnmatchedBrace,
+                            line: brace_close,
+                        });
+                    }
                 }
             } else if let Either::Right(Instruction::Block { instructions }) = item {
                 if let Some(Either::Left(Token {
@@ -87,17 +98,23 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, ParseError> {
     Ok(collection.into_iter().map(Either::unwrap_right).collect())
 }
 
-fn find_last_brace(collection: &[Either<Token, Instruction>], from: usize) -> Option<usize> {
+fn find_last_brace(
+    collection: &[Either<Token, Instruction>],
+    from: usize,
+) -> Result<usize, Option<usize>> {
     for i in (0..from).rev() {
-        if matches!(
-            collection[i],
+        match &collection[i] {
             Either::Left(Token {
                 ty: TokenType::BraceOpen,
                 ..
-            })
-        ) {
-            return Some(i);
+            }) => {
+                return Ok(i);
+            }
+            Either::Left(Token { line, .. }) => {
+                return Err(Some(*line));
+            }
+            _ => {}
         }
     }
-    None
+    Err(None)
 }
