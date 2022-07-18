@@ -5,7 +5,7 @@ use std::fs;
 use std::io::Write;
 
 use clap::Parser;
-use termcolor::{StandardStream, WriteColor, ColorSpec, Color};
+use termcolor::{Color, ColorSpec, StandardStream, WriteColor};
 
 #[derive(Parser)]
 struct Args {
@@ -27,9 +27,11 @@ fn main() {
                 for err in errs {
                     let line_number = err.line.to_string();
 
-                    stderr.set_color(ColorSpec::new().set_fg(Some(Color::Red)));
-                    write!(&mut stderr, "ERROR");
-                    stderr.reset();
+                    stderr
+                        .set_color(ColorSpec::new().set_fg(Some(Color::Red)))
+                        .unwrap();
+                    write!(&mut stderr, "ERROR").unwrap();
+                    stderr.reset().unwrap();
                     eprintln!(": {:?}", err.ty);
                     eprintln!(
                         "{} |{}",

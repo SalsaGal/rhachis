@@ -50,14 +50,14 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
                             match item {
                                 Either::Right(item) => {
                                     instructions.push(item.clone());
-                                },
+                                }
                                 Either::Left(token) => {
                                     errors.push(ParseError {
                                         ty: ParseErrorType::UnexpectedToken,
                                         line: token.line,
                                         line_range: token.line_range.clone(),
                                     });
-                                },
+                                }
                             }
                         }
 
