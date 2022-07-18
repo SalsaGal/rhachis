@@ -47,12 +47,16 @@ fn main() {
                         line_number,
                         contents.split('\n').nth(err.position.line - 1).unwrap()
                     );
+                    stderr
+                        .set_color(ColorSpec::new().set_fg(Some(Color::Cyan)))
+                        .unwrap();
                     eprintln!(
                         "{}  {}{}",
                         " ".repeat(line_number.len()),
                         " ".repeat(err.position.line_range.start),
                         "^".repeat(err.position.line_range.end - err.position.line_range.start)
                     );
+                    stderr.reset().unwrap();
                 }
             }
         }
