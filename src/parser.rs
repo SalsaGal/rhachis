@@ -46,7 +46,9 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
                             let mut instructions = Vec::new();
                             for item in collection.iter().take(brace_close).skip(brace_open + 1) {
                                 match item {
-                                    Either::Right(Instruction::Section { ident_position, .. }) => {
+                                    Either::Right(Instruction::Section {
+                                        ident_position, ..
+                                    }) => {
                                         errors.push(ParseError {
                                             ty: ParseErrorType::NestedSection,
                                             position: ident_position.clone(),
