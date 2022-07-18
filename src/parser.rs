@@ -36,66 +36,69 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
     while collection.iter().any(Either::is_left) {
         let mut changed = false;
         for (index, item) in collection.iter().enumerate() {
-            if let Either::Left(Token {
-                ty: TokenType::BraceClose,
-                line,
-                line_range,
-            }) = item
-            {
-                let brace_close = index;
-                match find_last(&collection, index, TokenType::BraceOpen) {
-                    Some(brace_open) => {
-                        let mut instructions = Vec::new();
-                        for item in collection.iter().take(brace_close).skip(brace_open + 1) {
-                            match item {
-                                Either::Right(item) => {
-                                    instructions.push(item.clone());
-                                }
-                                Either::Left(token) => {
-                                    errors.push(ParseError {
-                                        ty: ParseErrorType::UnexpectedToken,
-                                        line: token.line,
-                                        line_range: token.line_range.clone(),
-                                    });
+            match item {
+                Either::Left(Token {
+                    ty: TokenType::BraceClose,
+                    line,
+                    line_range,
+                }) => {
+                    let brace_close = index;
+                    match find_last(&collection, index, TokenType::BraceOpen) {
+                        Some(brace_open) => {
+                            let mut instructions = Vec::new();
+                            for item in collection.iter().take(brace_close).skip(brace_open + 1) {
+                                match item {
+                                    Either::Right(item) => {
+                                        instructions.push(item.clone());
+                                    }
+                                    Either::Left(token) => {
+                                        errors.push(ParseError {
+                                            ty: ParseErrorType::UnexpectedToken,
+                                            line: token.line,
+                                            line_range: token.line_range.clone(),
+                                        });
+                                    }
                                 }
                             }
-                        }
 
-                        collection.drain(brace_open..brace_close + 1);
+                            collection.drain(brace_open..brace_close + 1);
+                            collection.insert(
+                                brace_open,
+                                Either::Right(Instruction::Block { instructions }),
+                            );
+                            changed = true;
+                            break;
+                        }
+                        None => {
+                            errors.push(ParseError {
+                                ty: ParseErrorType::UnmatchedBrace,
+                                line: *line,
+                                line_range: line_range.clone(),
+                            });
+                        }
+                    }
+                }
+                Either::Right(Instruction::Block { instructions }) => {
+                    if let Some(Either::Left(Token {
+                        ty: TokenType::Identifier(ident),
+                        ..
+                    })) = collection.get(index - 1)
+                    {
+                        let instructions = instructions.clone();
+                        let ident = ident.clone();
+                        collection.drain(index - 1..index + 1);
                         collection.insert(
-                            brace_open,
-                            Either::Right(Instruction::Block { instructions }),
+                            index - 1,
+                            Either::Right(Instruction::Section {
+                                ident,
+                                instructions,
+                            }),
                         );
                         changed = true;
                         break;
                     }
-                    None => {
-                        errors.push(ParseError {
-                            ty: ParseErrorType::UnmatchedBrace,
-                            line: *line,
-                            line_range: line_range.clone(),
-                        });
-                    }
                 }
-            } else if let Either::Right(Instruction::Block { instructions }) = item {
-                if let Some(Either::Left(Token {
-                    ty: TokenType::Identifier(ident),
-                    ..
-                })) = collection.get(index - 1)
-                {
-                    let instructions = instructions.clone();
-                    let ident = ident.clone();
-                    collection.drain(index - 1..index + 1);
-                    collection.insert(
-                        index - 1,
-                        Either::Right(Instruction::Section {
-                            ident,
-                            instructions,
-                        }),
-                    );
-                    changed = true;
-                    break;
-                }
+                _ => {},
             }
         }
         if !changed {
