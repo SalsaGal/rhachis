@@ -5,17 +5,25 @@ use std::fs;
 use std::io::Write;
 
 use clap::Parser;
-use termcolor::{Color, ColorSpec, StandardStream, WriteColor};
+use termcolor::{Color, ColorSpec, StandardStream, WriteColor, ColorChoice};
 
 #[derive(Parser)]
 struct Args {
     /// Input files
     source: String,
+    /// Whether to show color or not, can be auto, none, or always
+    #[clap(short, long)]
+    color: Option<String>,
 }
 
 fn main() {
     let args = Args::parse();
-    let mut stderr = StandardStream::stderr(termcolor::ColorChoice::Always);
+    let mut stderr = StandardStream::stderr(match &*args.color.unwrap_or_else(|| "auto".to_owned()) {
+        "always" => ColorChoice::Always,
+        "auto" => ColorChoice::Auto,
+        "never" => ColorChoice::Never,
+        _ => panic!("Invalid color option"),
+    });
     if let Ok(contents) = fs::read_to_string(args.source) {
         let tokens = lexer::lex(contents.clone());
         let instructions = parser::parse(tokens);
