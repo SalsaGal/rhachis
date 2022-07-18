@@ -30,35 +30,32 @@ pub fn lex(contents: String) -> Vec<Token> {
     let mut current_token = String::new();
     let mut line = 1;
     let mut line_char = 0;
+    macro_rules! push_token {
+        () => {
+            if !current_token.is_empty() {
+                to_ret.push(Token {
+                    position: CodePosition::new(
+                        line,
+                        line_char - current_token.len()..line_char,
+                    ),
+                    ty: TokenType::Identifier(current_token.clone()),
+                });
+                current_token.clear();
+            }
+        }
+    }
+
     for c in contents.chars() {
         match c {
             '{' => {
-                if !current_token.is_empty() {
-                    to_ret.push(Token {
-                        position: CodePosition::new(
-                            line,
-                            line_char - current_token.len()..line_char,
-                        ),
-                        ty: TokenType::Identifier(current_token.clone()),
-                    });
-                    current_token.clear();
-                }
+                push_token!();
                 to_ret.push(Token {
                     position: CodePosition::new(line, line_char..line_char + 1),
                     ty: TokenType::BraceOpen,
                 });
             },
             '}' => {
-                if !current_token.is_empty() {
-                    to_ret.push(Token {
-                        position: CodePosition::new(
-                            line,
-                            line_char - current_token.len()..line_char,
-                        ),
-                        ty: TokenType::Identifier(current_token.clone()),
-                    });
-                    current_token.clear();
-                }
+                push_token!();
                 to_ret.push(Token {
                     position: CodePosition::new(line, line_char..line_char + 1),
                     ty: TokenType::BraceClose,
@@ -66,16 +63,7 @@ pub fn lex(contents: String) -> Vec<Token> {
             },
             _ => {
                 if c.is_whitespace() {
-                    if !current_token.is_empty() {
-                        to_ret.push(Token {
-                            position: CodePosition::new(
-                                line,
-                                line_char - current_token.len()..line_char,
-                            ),
-                            ty: TokenType::Identifier(current_token.clone()),
-                        });
-                        current_token.clear();
-                    }
+                    push_token!();
                     if c == '\n' {
                         line += 1;
                         line_char = 0;
