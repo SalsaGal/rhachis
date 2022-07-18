@@ -32,14 +32,38 @@ pub fn lex(contents: String) -> Vec<Token> {
     let mut line_char = 0;
     for c in contents.chars() {
         match c {
-            '{' => to_ret.push(Token {
-                position: CodePosition::new(line, line_char..line_char + 1),
-                ty: TokenType::BraceOpen,
-            }),
-            '}' => to_ret.push(Token {
-                position: CodePosition::new(line, line_char..line_char + 1),
-                ty: TokenType::BraceClose,
-            }),
+            '{' => {
+                if !current_token.is_empty() {
+                    to_ret.push(Token {
+                        position: CodePosition::new(
+                            line,
+                            line_char - current_token.len()..line_char,
+                        ),
+                        ty: TokenType::Identifier(current_token.clone()),
+                    });
+                    current_token.clear();
+                }
+                to_ret.push(Token {
+                    position: CodePosition::new(line, line_char..line_char + 1),
+                    ty: TokenType::BraceOpen,
+                });
+            },
+            '}' => {
+                if !current_token.is_empty() {
+                    to_ret.push(Token {
+                        position: CodePosition::new(
+                            line,
+                            line_char - current_token.len()..line_char,
+                        ),
+                        ty: TokenType::Identifier(current_token.clone()),
+                    });
+                    current_token.clear();
+                }
+                to_ret.push(Token {
+                    position: CodePosition::new(line, line_char..line_char + 1),
+                    ty: TokenType::BraceClose,
+                });
+            },
             _ => {
                 if c.is_whitespace() {
                     if !current_token.is_empty() {
