@@ -102,12 +102,24 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
             }
         }
         if !changed {
-            return Err(errors);
+            break;
         }
     }
 
+    let mut to_ret = Vec::new();
+    for item in collection {
+        match item {
+            Either::Left(item) => errors.push(ParseError {
+                ty: ParseErrorType::UnexpectedToken,
+                line: item.line,
+                line_range: item.line_range,
+            }),
+            Either::Right(item) => to_ret.push(item),
+        }
+    }
     if errors.is_empty() {
-        Ok(collection.into_iter().map(Either::unwrap_right).collect())
+        // Check for tokens
+        Ok(to_ret)
     } else {
         Err(errors)
     }
