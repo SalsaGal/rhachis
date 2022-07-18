@@ -47,7 +47,7 @@ fn main() {
                         contents.split('\n').nth(err.line - 1).unwrap()
                     );
                     eprintln!(
-                        "{} |{}{}\n",
+                        "{}  {}{}",
                         " ".repeat(line_number.len()),
                         " ".repeat(err.line_range.start),
                         "^".repeat(err.line_range.end - err.line_range.start)
