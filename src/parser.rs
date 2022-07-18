@@ -10,6 +10,7 @@ pub struct ParseError {
 
 #[derive(Debug)]
 pub enum ParseErrorType {
+    NestedSection,
     UnexpectedToken,
     UnmatchedBrace,
 }
@@ -21,6 +22,7 @@ pub enum Instruction {
     },
     Section {
         ident: String,
+        ident_position: CodePosition,
         instructions: Vec<Instruction>,
     },
 }
@@ -44,6 +46,12 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
                             let mut instructions = Vec::new();
                             for item in collection.iter().take(brace_close).skip(brace_open + 1) {
                                 match item {
+                                    Either::Right(Instruction::Section { ident_position, .. }) => {
+                                        errors.push(ParseError {
+                                            ty: ParseErrorType::NestedSection,
+                                            position: ident_position.clone(),
+                                        });
+                                    }
                                     Either::Right(item) => {
                                         instructions.push(item.clone());
                                     }
@@ -75,16 +83,19 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
                 Either::Right(Instruction::Block { instructions }) => {
                     if let Some(Either::Left(Token {
                         ty: TokenType::Identifier(ident),
+                        position,
                         ..
                     })) = collection.get(index - 1)
                     {
-                        let instructions = instructions.clone();
                         let ident = ident.clone();
+                        let ident_position = position.clone();
+                        let instructions = instructions.clone();
                         collection.drain(index - 1..index + 1);
                         collection.insert(
                             index - 1,
                             Either::Right(Instruction::Section {
                                 ident,
+                                ident_position,
                                 instructions,
                             }),
                         );
