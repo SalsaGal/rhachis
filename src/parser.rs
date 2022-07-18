@@ -1,14 +1,11 @@
-use std::ops::Range;
-
 use either::Either;
 
-use crate::lexer::{Token, TokenType};
+use crate::lexer::{CodePosition, Token, TokenType};
 
 #[derive(Debug)]
 pub struct ParseError {
     pub ty: ParseErrorType,
-    pub line: usize,
-    pub line_range: Range<usize>,
+    pub position: CodePosition,
 }
 
 #[derive(Debug)]
@@ -39,8 +36,7 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
             match item {
                 Either::Left(Token {
                     ty: TokenType::BraceClose,
-                    line,
-                    line_range,
+                    position,
                 }) => {
                     let brace_close = index;
                     match find_last(&collection, index, TokenType::BraceOpen) {
@@ -54,8 +50,7 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
                                     Either::Left(token) => {
                                         errors.push(ParseError {
                                             ty: ParseErrorType::UnexpectedToken,
-                                            line: token.line,
-                                            line_range: token.line_range.clone(),
+                                            position: token.position.clone(),
                                         });
                                     }
                                 }
@@ -72,8 +67,7 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
                         None => {
                             errors.push(ParseError {
                                 ty: ParseErrorType::UnmatchedBrace,
-                                line: *line,
-                                line_range: line_range.clone(),
+                                position: position.clone(),
                             });
                         }
                     }
@@ -98,7 +92,7 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
                         break;
                     }
                 }
-                _ => {},
+                _ => {}
             }
         }
         if !changed {
@@ -111,8 +105,7 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
         match item {
             Either::Left(item) => errors.push(ParseError {
                 ty: ParseErrorType::UnexpectedToken,
-                line: item.line,
-                line_range: item.line_range,
+                position: item.position,
             }),
             Either::Right(item) => to_ret.push(item),
         }
@@ -125,7 +118,11 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
     }
 }
 
-fn find_last(collection: &[Either<Token, Instruction>], from: usize, find: TokenType) -> Option<usize> {
+fn find_last(
+    collection: &[Either<Token, Instruction>],
+    from: usize,
+    find: TokenType,
+) -> Option<usize> {
     for i in (0..from).rev() {
         if let Either::Left(Token { ty, .. }) = &collection[i] {
             if *ty == find {

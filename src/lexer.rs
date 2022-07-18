@@ -1,9 +1,20 @@
 use std::ops::Range;
 
-#[derive(Debug, PartialEq, Eq)]
-pub struct Token {
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CodePosition {
     pub line: usize,
     pub line_range: Range<usize>,
+}
+
+impl CodePosition {
+    pub fn new(line: usize, line_range: Range<usize>) -> Self {
+        Self { line, line_range }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct Token {
+    pub position: CodePosition,
     pub ty: TokenType,
 }
 
@@ -22,21 +33,21 @@ pub fn lex(contents: String) -> Vec<Token> {
     for c in contents.chars() {
         match c {
             '{' => to_ret.push(Token {
-                line,
-                line_range: line_char..line_char + 1,
+                position: CodePosition::new(line, line_char..line_char + 1),
                 ty: TokenType::BraceOpen,
             }),
             '}' => to_ret.push(Token {
-                line,
-                line_range: line_char..line_char + 1,
+                position: CodePosition::new(line, line_char..line_char + 1),
                 ty: TokenType::BraceClose,
             }),
             _ => {
                 if c.is_whitespace() {
                     if !current_token.is_empty() {
                         to_ret.push(Token {
-                            line,
-                            line_range: line_char - current_token.len()..line_char,
+                            position: CodePosition::new(
+                                line,
+                                line_char - current_token.len()..line_char,
+                            ),
                             ty: TokenType::Identifier(current_token.clone()),
                         });
                         current_token.clear();
