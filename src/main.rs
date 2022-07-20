@@ -27,6 +27,7 @@ fn main() {
         });
     if let Ok(contents) = fs::read_to_string(args.source) {
         let tokens = lexer::lex(contents.clone());
+        dbg!(&tokens);
         let instructions = parser::parse(tokens);
         match instructions {
             Ok(instructions) => {

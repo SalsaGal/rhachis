@@ -1,2 +1,4 @@
-fn start {
+.text {
+    fn _start {
+    }
 }
