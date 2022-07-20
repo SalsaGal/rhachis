@@ -37,7 +37,6 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
     let mut errors = Vec::new();
 
     while collection.iter().any(Either::is_left) {
-        dbg!(&collection);
         let mut changed = false;
         for (index, item) in collection.iter().enumerate() {
             match item {
@@ -138,7 +137,6 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
             }
         }
         if !changed {
-            println!("No change");
             break;
         }
     }
