@@ -1,0 +1,27 @@
+.text {
+    pub fn _start() {
+        ax = 5;
+        double_ax();
+    }
+
+    // Registers following : are not preserved, so if they are edited inside
+    // the function, that edit is permanent, otherwise it is saved using the stack
+    fn double_ax() : ax {
+        ax += ax;
+    }
+}
+
+/*
+
+section .text
+global _start
+_start:
+    mov ax, 5
+    call add_ax
+    ret
+
+add_ax:
+    add ax, ax
+    ret
+
+*/

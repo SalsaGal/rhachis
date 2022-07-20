@@ -27,12 +27,22 @@ pub enum Instruction {
     },
 }
 
+fn instruction_done(item: &Either<Token, Instruction>) -> bool {
+    match item {
+        Either::Left(..) => false,
+        Either::Right(instruction) => match instruction {
+            _ => false,
+        },
+    }
+}
+
 pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
     let mut collection: Vec<Either<Token, Instruction>> =
         token.into_iter().map(Either::Left).collect();
     let mut errors = Vec::new();
 
-    while collection.iter().any(Either::is_left) {
+    while collection.iter().any(instruction_done) {
+        dbg!(&collection);
         let mut changed = false;
         for (index, item) in collection.iter().enumerate() {
             match item {
@@ -115,6 +125,7 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
 
     let mut to_ret = Vec::new();
     for item in collection {
+        // Check for tokens
         match item {
             Either::Left(item) => errors.push(ParseError {
                 ty: ParseErrorType::UnexpectedToken,
@@ -124,7 +135,6 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
         }
     }
     if errors.is_empty() {
-        // Check for tokens
         Ok(to_ret)
     } else {
         Err(errors)
