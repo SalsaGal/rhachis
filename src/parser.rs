@@ -100,11 +100,14 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
                         {
                             let ident = ident.clone();
                             let instructions = instructions.clone();
-                            collection.drain(index .. index + 3);
-                            collection.insert(index, Either::Right(Instruction::Function {
-                                ident,
-                                instructions,
-                            }));
+                            collection.drain(index..index + 3);
+                            collection.insert(
+                                index,
+                                Either::Right(Instruction::Function {
+                                    ident,
+                                    instructions,
+                                }),
+                            );
                             changed = true;
                             break;
                         }
