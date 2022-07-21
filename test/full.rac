@@ -1,24 +1,19 @@
 .text {
+    // Capturing is where a variable is allowed to be modified by a function
+
+    // Capture everything
     pub fn _start(*) {
-        bx = 4;
-        test();
+        ax = 4;
+        double_ax();
     }
 
-    fn test() {
-        al = 4;
-        ah = 5;
+    // Capture ax
+    fn double_ax(ax) {
+        ax += ax;
+    }
+
+    // Capture nothing
+    fn nothing() {
+        ax += ax;
     }
 }
-
-/*
-section .text
-global _start
-_start:
-    mov bx, 4
-    call test
-
-test:
-    mov al, 4
-    mov ah, 5
-    ret
-*/
