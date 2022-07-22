@@ -24,6 +24,8 @@ pub enum TokenType {
     BraceClose,
     Function,
     Identifier(String),
+    ParenOpen,
+    ParenClose,
 }
 
 pub fn lex(contents: String) -> Vec<Token> {
@@ -61,6 +63,20 @@ pub fn lex(contents: String) -> Vec<Token> {
 
     for c in contents.chars() {
         match c {
+            '(' => {
+                push_token!();
+                to_ret.push(Token {
+                    position: CodePosition::new(line, line_char..line_char + 1),
+                    ty: TokenType::ParenOpen,
+                });
+            }
+            ')' => {
+                push_token!();
+                to_ret.push(Token {
+                    position: CodePosition::new(line, line_char..line_char + 1),
+                    ty: TokenType::ParenClose,
+                });
+            }
             '{' => {
                 push_token!();
                 to_ret.push(Token {

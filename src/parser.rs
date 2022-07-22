@@ -13,6 +13,7 @@ pub enum ParseErrorType {
     NestedSection,
     UnexpectedToken,
     UnmatchedBrace,
+    UnmatchedParen,
 }
 
 #[derive(Clone, Debug)]
@@ -22,7 +23,11 @@ pub enum Instruction {
     },
     Function {
         ident: String,
+        captures: Captures,
         instructions: Vec<Instruction>,
+    },
+    FunctionCaptures {
+        captures: Captures,
     },
     Section {
         ident: String,
@@ -31,12 +36,31 @@ pub enum Instruction {
     },
 }
 
+#[derive(Clone, Debug)]
+pub enum Captures {
+    List(Vec<String>),
+    Star,
+}
+
+fn collection_backcheck(
+    collection: &[Either<Token, Instruction>],
+    index: usize,
+    offset: usize,
+) -> Option<&Either<Token, Instruction>> {
+    if offset > index {
+        None
+    } else {
+        collection.get(index - offset)
+    }
+}
+
 pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
     let mut collection: Vec<Either<Token, Instruction>> =
         token.into_iter().map(Either::Left).collect();
     let mut errors = Vec::new();
 
     while collection.iter().any(Either::is_left) {
+        dbg!(&collection);
         let mut changed = false;
         for (index, item) in collection.iter().enumerate() {
             match item {
@@ -87,29 +111,27 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
                     }
                 }
                 Either::Left(Token {
-                    ty: TokenType::Function,
-                    ..
+                    ty: TokenType::ParenClose,
+                    position,
                 }) => {
-                    if let Some(Either::Left(Token {
-                        ty: TokenType::Identifier(ident),
-                        ..
-                    })) = collection.get(index + 1)
-                    {
-                        if let Some(Either::Right(Instruction::Block { instructions })) =
-                            collection.get(index + 2)
-                        {
-                            let ident = ident.clone();
-                            let instructions = instructions.clone();
-                            collection.drain(index..index + 3);
+                    let paren_close = index;
+                    match find_last(&collection, index, TokenType::ParenOpen) {
+                        Some(paren_open) => {
+                            let captures = Captures::List(vec![]);
+                            for item in collection.iter().take(paren_close).skip(paren_open + 1) {}
+                            collection.drain(paren_open..paren_close + 1);
                             collection.insert(
-                                index,
-                                Either::Right(Instruction::Function {
-                                    ident,
-                                    instructions,
-                                }),
+                                paren_open,
+                                Either::Right(Instruction::FunctionCaptures { captures }),
                             );
                             changed = true;
                             break;
+                        }
+                        None => {
+                            errors.push(ParseError {
+                                ty: ParseErrorType::UnmatchedParen,
+                                position: position.clone(),
+                            });
                         }
                     }
                 }
@@ -118,8 +140,9 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
                         ty: TokenType::Identifier(ident),
                         position,
                         ..
-                    })) = collection.get(index - 1)
+                    })) = collection_backcheck(&collection, index, 1)
                     {
+                        // Section declaration
                         let ident = ident.clone();
                         let ident_position = position.clone();
                         let instructions = instructions.clone();
@@ -134,6 +157,35 @@ pub fn parse(token: Vec<Token>) -> Result<Vec<Instruction>, Vec<ParseError>> {
                         );
                         changed = true;
                         break;
+                    } else if let Some(Either::Right(Instruction::FunctionCaptures { captures })) =
+                        collection_backcheck(&collection, index, 1)
+                    {
+                        if let Some(Either::Left(Token {
+                            ty: TokenType::Identifier(ident),
+                            ..
+                        })) = collection_backcheck(&collection, index, 2)
+                        {
+                            if let Some(Either::Left(Token {
+                                ty: TokenType::Function,
+                                ..
+                            })) = collection_backcheck(&collection, index, 3)
+                            {
+                                let ident = ident.clone();
+                                let instructions = instructions.clone();
+                                let captures = captures.clone();
+                                collection.drain(index - 3..index + 1);
+                                collection.insert(
+                                    index - 3,
+                                    Either::Right(Instruction::Function {
+                                        ident,
+                                        captures,
+                                        instructions,
+                                    }),
+                                );
+                                changed = true;
+                                break;
+                            }
+                        }
                     }
                 }
                 _ => {}

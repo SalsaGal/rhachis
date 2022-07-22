@@ -1,4 +1,4 @@
 .text {
-    fn _start {
+    fn _start() {
     }
 }
