@@ -25,7 +25,7 @@ fn main() {
             "never" => ColorChoice::Never,
             _ => panic!("Invalid color option"),
         });
-    if let Ok(contents) = fs::read_to_string(args.source) {
+    if let Ok(contents) = fs::read_to_string(&args.source) {
         let tokens = lexer::lex(contents.clone());
         let instructions = parser::parse(tokens);
         match instructions {
@@ -60,5 +60,7 @@ fn main() {
                 }
             }
         }
+    } else {
+        eprintln!("Unable to load file {}", &args.source);
     }
 }
